@@ -1,35 +1,50 @@
 # LLM-Viterbi
 
-This repository explores convolutional decoding for noisy text transmission with three decoding strategies:
+## Overview
 
-- Standard Viterbi decoding
-- Standard Viterbi followed by LM-based correction
-- LM-enhanced Viterbi decoding with ByT5-based path pruning
+This repository studies language-model-assisted convolutional decoding for noisy text transmission. The codebase compares three decoding paradigms under additive channel noise:
 
-The core implementation lives in `decoder/viterbi_lm_decode.py`. The `evaluation/` scripts run batch experiments, and `scripts/plot_bler_results.py` plots BLER curves from saved results.
+- standard Viterbi decoding,
+- standard Viterbi followed by LM-based correction,
+- LM-enhanced Viterbi decoding with ByT5-guided path pruning.
 
-## Requirements
+The main implementation is provided in `decoder/viterbi_lm_decode.py`, while `evaluation/` contains experiment scripts for BLER, semantic similarity, and runtime analysis.
 
-- Python 3.10+ recommended
-- Install dependencies with:
+## Method Summary
+
+Given an input sentence, the pipeline:
+
+1. converts text into binary symbols,
+2. applies convolutional encoding,
+3. modulates the encoded bits with BPSK,
+4. injects AWGN at a chosen SNR,
+5. decodes the received sequence with one of the competing methods.
+
+The central research question is whether a character-level language model can improve decoding quality by pruning unlikely paths during the Viterbi search.
+
+## Setup
+
+Python 3.10+ is recommended.
+
+Install dependencies with:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Models
+## Model Configuration
 
-The project loads models from Hugging Face by default:
+The repository is configured to load pretrained models from Hugging Face by default:
 
-- Shared repository: `todd8642/LLMViterbi_ByT5_finetuned`
-- Pruning LM subfolder: `byt5_finetuned`
-- Correction LM subfolder: `ByT5_correction_finetuned`
-
-On first run, `transformers` will automatically download the model files into the local cache.
+- repository: `todd8642/LLMViterbi_ByT5_finetuned`
+- pruning LM subfolder: `byt5_finetuned`
+- correction LM subfolder: `ByT5_correction_finetuned`
 
 Model source:
 
 - [Hugging Face model repository](https://huggingface.co/todd8642/LLMViterbi_ByT5_finetuned/commit/d55c2f057e023b6770f5dacb59b8a5025345be44)
+
+On first use, `transformers` will download model artifacts into the local cache automatically. The repository does not track local `models/` or `debug/` folders.
 
 Optional environment variables:
 
@@ -40,22 +55,17 @@ Optional environment variables:
 - `VITERBI_CORRECTION_MODEL`
 - `VITERBI_CORRECTION_SUBFOLDER`
 
-Example on Windows PowerShell:
+If private Hugging Face repositories are used, authenticate first with `huggingface-cli login`.
 
-```powershell
-$env:VITERBI_HF_REPO="todd8642/LLMViterbi_ByT5_finetuned"
-python evaluation\batch_test_bler.py
-```
+## Running Experiments
 
-## Quick Start
-
-Run the main batch BLER evaluation:
+Main BLER evaluation:
 
 ```bash
 python evaluation/batch_test_bler.py
 ```
 
-Other useful scripts:
+Additional scripts:
 
 - `python evaluation/batch_collect_standard.py`
 - `python evaluation/batch_test_sbert.py`
@@ -63,22 +73,24 @@ Other useful scripts:
 - `python evaluation/batch_test_performance.py`
 - `python evaluation/batch_time_test_performance.py`
 
-To plot the latest BLER result:
+Plot the latest BLER result:
 
 ```bash
 python scripts/plot_bler_results.py
 ```
 
-## Repository Layout
+Windows PowerShell example:
 
-- `decoder/`: core encoding, channel simulation, and decoding logic
-- `evaluation/`: batch evaluation and benchmarking scripts
-- `scripts/`: result visualization utilities
-- `data/`: test and training data
-- `results/`: generated evaluation outputs
-- `finetune/`: training and model evaluation scripts
+```powershell
+$env:VITERBI_HF_REPO="todd8642/LLMViterbi_ByT5_finetuned"
+python evaluation\batch_test_bler.py
+```
 
-## Notes
+## Repository Structure
 
-- `debug/` and `models/` are intentionally excluded from Git tracking.
-- If you use private Hugging Face repositories, log in with `huggingface-cli login` before running the code.
+- `decoder/`: encoding, channel simulation, and decoding algorithms
+- `evaluation/`: batch experiments and benchmarking
+- `scripts/`: plotting and result utilities
+- `data/`: training and test data
+- `results/`: generated experiment outputs
+- `finetune/`: fine-tuning and model evaluation scripts
